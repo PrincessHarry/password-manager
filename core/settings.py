@@ -81,12 +81,8 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('PORT'),
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -134,6 +130,6 @@ LOGIN_REDIRECT_URL = 'home/'
 
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'home/static'), ]
 
-ENCRYPT_KEY = ast.literal_eval(os.getenv('ENCRYPT_KEY'))
+# ENCRYPT_KEY = ast.literal_eval(os.getenv('ENCRYPT_KEY'))
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

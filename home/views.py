@@ -13,6 +13,7 @@ from home.models import UserPassword
 from home.utils import generate_random_password
 
 
+
 # home page
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def home_page(request):
