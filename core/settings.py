@@ -29,9 +29,13 @@ load_dotenv()
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', '0').lower() in ['true', 't', '1']
+# DEBUG = os.getenv('DEBUG', '0').lower() in ['true', 't', '1']
+DEBUG = True
 
-ALLOWED_HOSTS = ['password-manager-uf04.onrender.com', '127.0.0.1']
+
+
+
+ALLOWED_HOSTS = ['127.0.0.1', 'password-manager-uf04.onrender.com']
 
 # Application definition
 
@@ -82,7 +86,7 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
 

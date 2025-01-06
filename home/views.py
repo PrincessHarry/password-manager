@@ -41,6 +41,7 @@ def register_page(request):
         if form.is_valid():
             form.save()
             messages.success(request, "Account registered successfully. Please log in to your account.")
+            login(request, user)
         else:
             print("Registration failed!")
     else:
