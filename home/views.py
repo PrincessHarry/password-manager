@@ -11,6 +11,14 @@ from home.encrypt_util import encrypt, decrypt
 from home.forms import RegistrationForm, LoginForm, UpdatePasswordForm
 from home.models import UserPassword
 from home.utils import generate_random_password
+from django.db import transaction
+from webauthn import generate_registration_options, generate_authentication_options
+from webauthn.helpers.structs import RegistrationCredential, AuthenticationCredential
+from webauthn.helpers import (
+    verify_registration_response,
+    verify_authentication_response
+)
+
 
 
 
@@ -62,11 +70,14 @@ def logout_view(request):
 
 # add new password
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
+
 def add_new_password(request):
+   
     if not request.user.is_authenticated:
         return redirect('%s?next=%s' % ('/', request.path))
     if request.method == 'POST':
         try:
+           with transaction.atomic():
             username = request.POST['username']
             password = encrypt(request.POST['password'])
             application_type = request.POST['application_type']
@@ -88,8 +99,11 @@ def add_new_password(request):
                                             game_name=game_name, game_developer=game_developer, user=request.user)
                 messages.success(request, f"New password added for {game_name}.")
             return HttpResponseRedirect("/add-password")
-        except Exception as error:
-            print("Error: ", error)
+        except Exception as e:
+            print(f"Database error: {e}")
+            messages.error(request, f"Failed to save password: {str(e)}")
+          
+
 
     return render(request, 'pages/add-password.html')
 
@@ -165,3 +179,54 @@ def manage_passwords(request):
 def generate_password(request):
     password = generate_random_password()
     return JsonResponse({'password': password})
+
+
+
+# Registration View
+def register(request):
+    # Generate registration options for the user
+    options = generate_registration_options(
+        rp_name="Password Manager",
+        rp_id="password-manager-uf04.onrender.com",  # Your domain
+        user_name=request.user.username,
+        user_id=request.user.id,
+    )
+    # Send options to the frontend
+    return JsonResponse(options)
+
+# Registration Response (Frontend sends data here after user registers)
+def complete_registration(request):
+    # Parse registration credential and verify it
+    registration_credential = RegistrationCredential.parse_raw(request.body)
+    verified = verify_registration_response(
+        registration_credential,
+        expected_rp_id="password-manager-uf04.onrender.com",
+        expected_user=request.user
+    )
+    if verified:
+        return JsonResponse({"status": "success"})
+    else:
+        return JsonResponse({"status": "failed"}, status=400)
+
+# Authentication View (for fingerprint verification)
+def authenticate(request):
+    # Generate authentication options for the user
+    options = generate_authentication_options(
+        rp_id="password-manager-uf04.onrender.com",
+        user_id=request.user.id,
+    )
+    return JsonResponse(options)
+
+# Authentication Response (Frontend sends data here after authentication)
+def complete_authentication(request):
+    # Parse authentication credential and verify it
+    authentication_credential = AuthenticationCredential.parse_raw(request.body)
+    verified = verify_authentication_response(
+        authentication_credential,
+        expected_rp_id="password-manager-uf04.onrender.com",
+        expected_user=request.user
+    )
+    if verified:
+        return JsonResponse({"status": "authenticated"})
+    else:
+        return JsonResponse({"status": "failed"}, status=400)

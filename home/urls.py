@@ -19,4 +19,9 @@ urlpatterns = [
 
     # path for generating random password
     path('generate-password/', generate_password, name='generate-password'),
+    
+    path('register/', views.register, name='register'),
+    path('complete-registration/', views.complete_registration, name='complete_registration'),
+    path('authenticate/', views.authenticate, name='authenticate'),
+    path('complete-authentication/', views.complete_authentication, name='complete_authentication'),
 ]

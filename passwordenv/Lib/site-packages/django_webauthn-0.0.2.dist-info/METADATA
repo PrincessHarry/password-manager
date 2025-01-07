@@ -1,0 +1,36 @@
+Metadata-Version: 2.1
+Name: django-webauthn
+Version: 0.0.2
+Summary: Django support for Web Authn.
+Home-page: https://github.com/shemigon/django-webauthn
+Author: Boris Shemigon
+Author-email: i@boris.co
+License: MIT
+Keywords: django environment variables 12factor
+Platform: any
+Classifier: Development Status :: 1 - Planning
+Classifier: Intended Audience :: Developers
+Classifier: Framework :: Django
+Classifier: Framework :: Django :: 2.0
+Classifier: Framework :: Django :: 2.1
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Utilities
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Framework :: Django
+Description-Content-Type: text/markdown
+Requires-Dist: django-appconf (>=1.0)
+
+# Django WebAuthn
+
+[![Build Status](https://travis-ci.org/shemigon/django-webauthn.svg?branch=master)](https://travis-ci.org/shemigon/django-webauthn)
+
+Django support of [WebAuthn](https://www.w3.org/TR/webauthn/) using [PyWARP](https://github.com/pyauth/pywarp).
+
+Work has just started.
+
+

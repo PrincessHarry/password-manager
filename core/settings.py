@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'home'
+    'webauthn',
+    'home',
 ]
 
 MIDDLEWARE = [
@@ -59,6 +60,13 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# Add WebAuthn settings
+WEB_AUTHN = {
+    'RP_ID': 'password-manager-uf04.onrender.com',  # Your site's domain name (e.g., 'yourdomain.com')
+    'RP_NAME': 'Password Manager',  # Your application name
+    'RP_ICON': 'https://example.com/icon.png',  # Optional: Add an icon URL
+}
 
 ROOT_URLCONF = 'core.urls'
 
@@ -134,6 +142,6 @@ LOGIN_REDIRECT_URL = 'home/'
 
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'home/static'), ]
 
-# ENCRYPT_KEY = ast.literal_eval(os.getenv('ENCRYPT_KEY'))
+ENCRYPT_KEY = ast.literal_eval(os.getenv('ENCRYPT_KEY'))
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

@@ -77,3 +77,51 @@ function toggleView(id) {
         icon.classList.add("fa-eye")
     }
 }
+
+// fingerprint
+
+    async function registerUser() {
+        const response = await fetch('/home/register/');
+        const options = await response.json();
+
+        // Call WebAuthn API to register the user
+        const credential = await navigator.credentials.create({
+            publicKey: options
+        });
+
+        // Send the credential to your server for verification
+        const result = await fetch('/home/complete-registration/', {
+            method: 'POST',
+            body: JSON.stringify(credential)
+        });
+
+        if (result.ok) {
+            alert('Registration successful!');
+        } else {
+            alert('Registration failed');
+        }
+    }
+
+    async function authenticateUser() {
+        const response = await fetch('/authenticate/');
+        const options = await response.json();
+
+        // Call WebAuthn API to authenticate the user
+        const credential = await navigator.credentials.get({
+            publicKey: options
+        });
+
+        // Send the credential to your server for verification
+        const result = await fetch('/complete-authentication/', {
+            method: 'POST',
+            body: JSON.stringify(credential)
+        });
+
+        if (result.ok) {
+            alert('Authentication successful!');
+            // Proceed to view saved passwords or other sensitive data
+        } else {
+            alert('Authentication failed');
+        }
+    }
+
