@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="C:\Users\Princy\desktop\password-manager-django\passwordenv"
+VIRTUAL_ENV="C:\Users\Princy\Desktop\password-manager\passwordenv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

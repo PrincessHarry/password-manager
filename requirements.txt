@@ -14,3 +14,4 @@ tomli==2.0.1
 tzdata==2022.7
 python-dotenv
 whitenoise==6.8.2
+webauthn==2.4.0
