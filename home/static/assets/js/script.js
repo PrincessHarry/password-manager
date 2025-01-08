@@ -103,7 +103,7 @@ function toggleView(id) {
     }
 
     async function authenticateUser() {
-        const response = await fetch('/authenticate/');
+        const response = await fetch('/home/authenticate/');
         const options = await response.json();
 
         // Call WebAuthn API to authenticate the user
@@ -112,16 +112,21 @@ function toggleView(id) {
         });
 
         // Send the credential to your server for verification
-        const result = await fetch('/complete-authentication/', {
+        const result = await fetch('/home/complete-authentication/', {
             method: 'POST',
             body: JSON.stringify(credential)
         });
 
         if (result.ok) {
+            // Fetch and display decrypted passwords
+            const passwordResponse = await fetch('/home/get-decrypted-passwords/');
+            const passwords = await passwordResponse.json();
+            console.log(passwords);  // Display passwords
             alert('Authentication successful!');
-            // Proceed to view saved passwords or other sensitive data
         } else {
             alert('Authentication failed');
         }
     }
+    
+    
 

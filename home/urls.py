@@ -24,4 +24,5 @@ urlpatterns = [
     path('complete-registration/', views.complete_registration, name='complete_registration'),
     path('authenticate/', views.authenticate, name='authenticate'),
     path('complete-authentication/', views.complete_authentication, name='complete_authentication'),
+    path('get_decrypted_passwords/', views.get_decrypted_passwords, name='get_decrypted_passwords'),
 ]

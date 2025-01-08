@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.contrib.auth import logout
+from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.views import LoginView
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -12,12 +12,12 @@ from home.forms import RegistrationForm, LoginForm, UpdatePasswordForm
 from home.models import UserPassword
 from home.utils import generate_random_password
 from django.db import transaction
-from webauthn import generate_registration_options, generate_authentication_options
+from webauthn import generate_registration_options, generate_authentication_options, verify_registration, verify_authentication
 from webauthn.helpers.structs import RegistrationCredential, AuthenticationCredential
-from webauthn.helpers import (
-    verify_registration_response,
-    verify_authentication_response
-)
+# from webauthn.helpers import (
+#     verify_registration_response,
+#     verify_authentication_response
+# )
 
 
 
@@ -47,7 +47,7 @@ def register_page(request):
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
         if form.is_valid():
-            form.save()
+            user = form.save()
             messages.success(request, "Account registered successfully. Please log in to your account.")
             login(request, user)
         else:
@@ -189,44 +189,78 @@ def register(request):
         rp_name="Password Manager",
         rp_id="password-manager-uf04.onrender.com",  # Your domain
         user_name=request.user.username,
-        user_id=request.user.id,
+        user_id=str(request.user.id),
     )
     # Send options to the frontend
-    return JsonResponse(options)
+    request.session['webauthn_challenge'] = options.challenge
+    return JsonResponse(options.dict())
 
 # Registration Response (Frontend sends data here after user registers)
 def complete_registration(request):
     # Parse registration credential and verify it
-    registration_credential = RegistrationCredential.parse_raw(request.body)
-    verified = verify_registration_response(
-        registration_credential,
-        expected_rp_id="password-manager-uf04.onrender.com",
-        expected_user=request.user
-    )
-    if verified:
-        return JsonResponse({"status": "success"})
-    else:
-        return JsonResponse({"status": "failed"}, status=400)
+    credential = RegistrationCredential.parse_raw(request.body)
+    challenge = request.session.get('webauthn_challenge')
 
+    # Verify the registration response
+    verification = verify_registration(
+        credential=credential,
+        expected_challenge=challenge,
+        expected_rp_id="password-manager-uf04.onrender.com",  # Your domain name
+        expected_origin="https://password-manager-uf04.onrender.com",
+    )
+    if verification.verified:
+        # Store credential ID and public key
+        request.user.webauthn_credential_id = verification.credential_id
+        request.user.webauthn_public_key = verification.credential_public_key
+        request.user.save()
+        return JsonResponse({"status": "success"})
+
+    return JsonResponse({"status": "failed"}, status=400)
 # Authentication View (for fingerprint verification)
 def authenticate(request):
     # Generate authentication options for the user
     options = generate_authentication_options(
         rp_id="password-manager-uf04.onrender.com",
-        user_id=request.user.id,
+        user_verification="required",
+        allow_credentials=[
+            {
+                "id": request.user.webauthn_credential_id,
+                "type": "public-key",
+            }
+        ],
     )
-    return JsonResponse(options)
-
+    # Store the challenge in the session
+    request.session['webauthn_challenge'] = options.challenge
+    return JsonResponse(options.dict())
 # Authentication Response (Frontend sends data here after authentication)
 def complete_authentication(request):
-    # Parse authentication credential and verify it
-    authentication_credential = AuthenticationCredential.parse_raw(request.body)
-    verified = verify_authentication_response(
-        authentication_credential,
+      # Parse authentication credential sent by the client
+    credential = AuthenticationCredential.parse_raw(request.body)
+    challenge = request.session.get('webauthn_challenge')
+
+    # Verify the authentication response
+    verification = verify_authentication(
+        credential=credential,
+        expected_challenge=challenge,
         expected_rp_id="password-manager-uf04.onrender.com",
-        expected_user=request.user
+        expected_origin="https://password-manager-uf04.onrender.com",
+        credential_public_key=request.user.webauthn_public_key,
     )
-    if verified:
+
+    if verification.verified:
         return JsonResponse({"status": "authenticated"})
-    else:
-        return JsonResponse({"status": "failed"}, status=400)
+    return JsonResponse({"status": "failed"}, status=400)
+
+def get_decrypted_passwords(request):
+    if request.user.is_authenticated:
+        # Fetch encrypted passwords from the database
+        encrypted_passwords = encrypt(request.user)
+
+        # Decrypt passwords
+        decrypted_passwords = [
+            decrypt(password, request.user.secret_key)
+            for password in encrypted_passwords
+        ]
+
+        return JsonResponse({"passwords": decrypted_passwords})
+    return JsonResponse({"error": "Unauthorized"}, status=401)
