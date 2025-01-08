@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # 'django_mfa2',
     'webauthn',
     'home',
 ]
@@ -59,14 +60,19 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'django_mfa2.middleware.MfaMiddleware',
 ]
 
-# Add WebAuthn settings
+# # Add WebAuthn settings
 WEB_AUTHN = {
     'RP_ID': 'password-manager-uf04.onrender.com',  # Your site's domain name (e.g., 'yourdomain.com')
     'RP_NAME': 'Password Manager',  # Your application name
     'RP_ICON': 'https://example.com/icon.png',  # Optional: Add an icon URL
 }
+
+# # MFA Settings
+# MFA_SERVER_NAME = 'password-manager-uf04.onrender.com'  # Replace with your domain
+# MFA_WEB_AUTHN_SERVER = 'https://password-manager-uf04.onrender.com'  # For WebAuthn
 
 ROOT_URLCONF = 'core.urls'
 

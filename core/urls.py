@@ -22,4 +22,6 @@ admin.site.site_header = 'Password Manager Administration'
 urlpatterns = [
     path('', include('home.urls')),
     path('admin/', admin.site.urls),
+    # path('mfa/', include('django_mfa2.urls')),
+    path('webauthn/', include('webauthn.urls')),
 ]

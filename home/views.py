@@ -12,7 +12,7 @@ from home.forms import RegistrationForm, LoginForm, UpdatePasswordForm
 from home.models import UserPassword
 from home.utils import generate_random_password
 from django.db import transaction
-from webauthn import generate_registration_options, generate_authentication_options, verify_registration, verify_authentication
+from webauthn import generate_registration_options, generate_authentication_options, verify_registration_response, verify_authentication_response
 from webauthn.helpers.structs import RegistrationCredential, AuthenticationCredential
 # from webauthn.helpers import (
 #     verify_registration_response,
@@ -202,7 +202,7 @@ def complete_registration(request):
     challenge = request.session.get('webauthn_challenge')
 
     # Verify the registration response
-    verification = verify_registration(
+    verification = verify_registration_response(
         credential=credential,
         expected_challenge=challenge,
         expected_rp_id="password-manager-uf04.onrender.com",  # Your domain name
@@ -239,7 +239,7 @@ def complete_authentication(request):
     challenge = request.session.get('webauthn_challenge')
 
     # Verify the authentication response
-    verification = verify_authentication(
+    verification =  verify_authentication_response(
         credential=credential,
         expected_challenge=challenge,
         expected_rp_id="password-manager-uf04.onrender.com",

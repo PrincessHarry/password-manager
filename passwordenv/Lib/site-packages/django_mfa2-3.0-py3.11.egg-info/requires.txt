@@ -1,0 +1,7 @@
+django>=2.0
+pyotp
+python-u2flib-server
+ua-parser
+user-agents
+python-jose
+fido2<1.2.0,>=1.1.1
