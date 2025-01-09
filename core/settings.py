@@ -35,7 +35,7 @@ DEBUG = True
 
 
 
-ALLOWED_HOSTS = ['127.0.0.1', 'password-manager-uf04.onrender.com']
+ALLOWED_HOSTS = ['127.0.0.1', 'password-manager.up.railway.app']
 
 # Application definition
 
