@@ -129,4 +129,60 @@ function toggleView(id) {
     }
     
     
+    async function viewPasswords() {
+        const authResult = await authenticateUser();
+        if (authResult.status === "authenticated") {
+            const response = await fetch('/home/get-decrypted-passwords/');
+            if (response.ok) {
+                const data = await response.json();
+                console.log("Decrypted passwords:", data.passwords);
+                alert('Passwords fetched successfully!');
+            } else {
+                alert('Failed to fetch passwords. Ensure fingerprint authentication is complete.');
+            }
+        } else {
+            alert('Fingerprint authentication failed.');
+        }
+    }
+    
+    async function authenticateBeforeViewing() {
+        try {
+            // Replace with your WebAuthn options generation endpoint
+            const response = await fetch('/authenticate/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}', // Ensure CSRF token is included
+                }
+            });
+            const options = await response.json();
+
+            // Trigger fingerprint authentication
+            const credential = await navigator.credentials.get({
+                publicKey: options,
+            });
+
+            // Send authentication response to the server
+            const verificationResponse = await fetch('/complete_authentication(/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}', // Ensure CSRF token is included
+                },
+                body: JSON.stringify(credential),
+            });
+
+            const verificationResult = await verificationResponse.json();
+
+            if (verificationResult.success) {
+                // If successful, redirect to "manage-passwords"
+                window.location.href = "{% url 'manage-passwords' %}";
+            } else {
+                alert("Authentication failed. You cannot view the passwords.");
+            }
+        } catch (error) {
+            console.error('Authentication error:', error);
+            alert('Authentication failed. Please try again.');
+        }
+    }
 

@@ -65,7 +65,7 @@ MIDDLEWARE = [
 
 # # Add WebAuthn settings
 WEB_AUTHN = {
-    'RP_ID': 'password-manager-uf04.onrender.com',  # Your site's domain name (e.g., 'yourdomain.com')
+    'RP_ID': 'password-manager-es06.onrender.com',  # Your site's domain name (e.g., 'yourdomain.com')
     'RP_NAME': 'Password Manager',  # Your application name
     'RP_ICON': 'https://example.com/icon.png',  # Optional: Add an icon URL
 }

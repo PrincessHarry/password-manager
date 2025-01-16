@@ -30,16 +30,37 @@ def home_page(request):
     return render(request, 'pages/home.html')
 
 
-# user login
-class UserLoginView(LoginView):
-    form_class = LoginForm
-    template_name = 'pages/index.html'
+# # user login
+# class UserLoginView(LoginView):
+#     form_class = LoginForm
+#     template_name = 'pages/index.html'
 
+
+# def user_login_view(request):
+#     if request.user.is_authenticated:
+#         return redirect('/home')
+#     return UserLoginView.as_view()(request)
 
 def user_login_view(request):
     if request.user.is_authenticated:
         return redirect('/home')
-    return UserLoginView.as_view()(request)
+
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            user = authenticate(username=username, password=password)
+            if user:
+                login(request, user)
+                # Generate WebAuthn challenge for MFA
+                return redirect('/home/authenticate/')  # Redirect to fingerprint verification
+            else:
+                messages.error(request, "Invalid username or password.")
+    else:
+        form = LoginForm()
+
+    return render(request, 'pages/index.html', {'form': form})
 
 
 # register new user
@@ -187,7 +208,7 @@ def register(request):
     # Generate registration options for the user
     options = generate_registration_options(
         rp_name="Password Manager",
-        rp_id="password-manager-uf04.onrender.com",  # Your domain
+        rp_id="password-manager-es06.onrender.com",  # Your domain
         user_name=request.user.username,
         user_id=str(request.user.id),
     )
@@ -205,8 +226,8 @@ def complete_registration(request):
     verification = verify_registration_response(
         credential=credential,
         expected_challenge=challenge,
-        expected_rp_id="password-manager-uf04.onrender.com",  # Your domain name
-        expected_origin="https://password-manager-uf04.onrender.com",
+        expected_rp_id="password-manager-es06.onrender.com",  # Your domain name
+        expected_origin="https://password-manager-es06.onrender.com",
     )
     if verification.verified:
         # Store credential ID and public key
@@ -220,7 +241,7 @@ def complete_registration(request):
 def authenticate(request):
     # Generate authentication options for the user
     options = generate_authentication_options(
-        rp_id="password-manager-uf04.onrender.com",
+        rp_id="password-manager-es06.onrender.com",
         user_verification="required",
         allow_credentials=[
             {
@@ -233,34 +254,65 @@ def authenticate(request):
     request.session['webauthn_challenge'] = options.challenge
     return JsonResponse(options.dict())
 # Authentication Response (Frontend sends data here after authentication)
+# def complete_authentication(request):
+#       # Parse authentication credential sent by the client
+#     credential = AuthenticationCredential.parse_raw(request.body)
+#     challenge = request.session.get('webauthn_challenge')
+
+#     # Verify the authentication response
+#     verification =  verify_authentication_response(
+#         credential=credential,
+#         expected_challenge=challenge,
+#         expected_rp_id="password-manager-uf04.onrender.com",
+#         expected_origin="https://password-manager-uf04.onrender.com",
+#         credential_public_key=request.user.webauthn_public_key,
+#     )
+
+#     if verification.verified:
+#         return JsonResponse({"status": "authenticated"})
+#     return JsonResponse({"status": "failed"}, status=400)
+
 def complete_authentication(request):
-      # Parse authentication credential sent by the client
     credential = AuthenticationCredential.parse_raw(request.body)
     challenge = request.session.get('webauthn_challenge')
 
-    # Verify the authentication response
-    verification =  verify_authentication_response(
+    verification = verify_authentication_response(
         credential=credential,
         expected_challenge=challenge,
-        expected_rp_id="password-manager-uf04.onrender.com",
-        expected_origin="https://password-manager-uf04.onrender.com",
+        expected_rp_id="password-manager-es06.onrender.com",
+        expected_origin="https://password-manager-es06.onrender.com",
         credential_public_key=request.user.webauthn_public_key,
     )
 
     if verification.verified:
+        request.session['is_fingerprint_verified'] = True  # Set flag for MFA success
         return JsonResponse({"status": "authenticated"})
     return JsonResponse({"status": "failed"}, status=400)
 
-def get_decrypted_passwords(request):
-    if request.user.is_authenticated:
-        # Fetch encrypted passwords from the database
-        encrypted_passwords = encrypt(request.user)
 
-        # Decrypt passwords
+# def get_decrypted_passwords(request):
+#     if request.user.is_authenticated:
+#         # Fetch encrypted passwords from the database
+#         encrypted_passwords = encrypt(request.user)
+
+#         # Decrypt passwords
+#         decrypted_passwords = [
+#             decrypt(password, request.user.secret_key)
+#             for password in encrypted_passwords
+#         ]
+
+#         return JsonResponse({"passwords": decrypted_passwords})
+#     return JsonResponse({"error": "Unauthorized"}, status=401)
+def get_decrypted_passwords(request):
+    if request.user.is_authenticated and request.session.get('is_fingerprint_verified', False):
+        encrypted_passwords = UserPassword.objects.filter(user=request.user)
         decrypted_passwords = [
-            decrypt(password, request.user.secret_key)
+            {
+                "application_type": password.application_type,
+                "username": password.username,
+                "password": decrypt(password.password)
+            }
             for password in encrypted_passwords
         ]
-
         return JsonResponse({"passwords": decrypted_passwords})
-    return JsonResponse({"error": "Unauthorized"}, status=401)
+    return JsonResponse({"error": "Unauthorized or MFA required"}, status=401)
